@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -57,6 +57,8 @@ export default function HomeScreen() {
 
   // Handle action button press
   const handleAction = async (action: "improve" | "flashcards" | "summary") => {
+    console.log("handleAction called with action:", action, "notes length:", notes.length);
+    
     if (!notes.trim()) {
       setError("Please enter some notes first");
       return;
@@ -75,12 +77,14 @@ export default function HomeScreen() {
       // Check cache first
       const cached = await getCachedOutput(action, extractedTopic, truncatedText);
       if (cached) {
+        console.log("Using cached output for action:", action);
         setOutputs(cached);
         setLoading(false);
         return;
       }
 
       // Call tRPC mutation
+      console.log("Calling LLM API for action:", action);
       const data = await generateMutation.mutateAsync({
         action,
         topic: extractedTopic,
@@ -237,13 +241,14 @@ export default function HomeScreen() {
             </View>
 
             {/* Clear Button */}
-            <Pressable
-              onPress={handleClear}
-              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-              className="self-end"
-            >
-              <Text className="text-sm font-semibold text-primary">Clear</Text>
-            </Pressable>
+            <View className="self-end">
+              <Pressable
+                onPress={handleClear}
+                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+              >
+                <Text className="text-sm font-semibold text-primary">Clear</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* Action Buttons Grid */}
@@ -254,11 +259,13 @@ export default function HomeScreen() {
                 label="Improve"
                 onPress={() => handleAction("improve")}
                 loading={loading && activeTab === "notes"}
+                colors={colors}
               />
               <ActionButton
                 label="Flashcards"
                 onPress={() => handleAction("flashcards")}
                 loading={loading && activeTab === "flashcards"}
+                colors={colors}
               />
             </View>
             <View className="flex-row gap-3">
@@ -266,11 +273,13 @@ export default function HomeScreen() {
                 label="Summary"
                 onPress={() => handleAction("summary")}
                 loading={loading && activeTab === "summary"}
+                colors={colors}
               />
               <ActionButton
                 label="Save Set"
                 onPress={handleSave}
                 variant="secondary"
+                colors={colors}
               />
             </View>
           </View>
@@ -305,14 +314,15 @@ export default function HomeScreen() {
                   key={index}
                   onPress={() => toggleFlip(index)}
                   style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
-                  className="bg-surface border border-border rounded-lg p-4 min-h-[120px] justify-center items-center"
                 >
-                  <Text className="text-xs text-muted mb-2">
-                    {flippedCards.has(index) ? "Answer" : "Question"}
-                  </Text>
-                  <Text className="text-sm font-semibold text-foreground text-center">
-                    {flippedCards.has(index) ? card.a : card.q}
-                  </Text>
+                  <View className="bg-surface border border-border rounded-lg p-4 min-h-[120px] justify-center items-center">
+                    <Text className="text-xs text-muted mb-2">
+                      {flippedCards.has(index) ? "Answer" : "Question"}
+                    </Text>
+                    <Text className="text-sm font-semibold text-foreground text-center">
+                      {flippedCards.has(index) ? card.a : card.q}
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </View>
@@ -332,11 +342,12 @@ export default function HomeScreen() {
             <Pressable
               onPress={() => setShowSaved(!showSaved)}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-              className="bg-surface border border-border rounded-lg p-3"
             >
-              <Text className="text-sm font-semibold text-primary">
-                📚 Saved Sets ({savedSets.length})
-              </Text>
+              <View className="bg-surface border border-border rounded-lg p-3">
+                <Text className="text-sm font-semibold text-primary">
+                  📚 Saved Sets ({savedSets.length})
+                </Text>
+              </View>
             </Pressable>
           ) : null}
 
@@ -358,16 +369,18 @@ export default function HomeScreen() {
                     <Pressable
                       onPress={() => handleLoad(set)}
                       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                      className="flex-1 bg-primary rounded px-3 py-2"
                     >
-                      <Text className="text-xs font-semibold text-background text-center">Load</Text>
+                      <View className="flex-1 bg-primary rounded px-3 py-2">
+                        <Text className="text-xs font-semibold text-background text-center">Load</Text>
+                      </View>
                     </Pressable>
                     <Pressable
                       onPress={() => handleDelete(set.id)}
                       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-                      className="flex-1 bg-error/20 rounded px-3 py-2"
                     >
-                      <Text className="text-xs font-semibold text-error text-center">Delete</Text>
+                      <View className="flex-1 bg-error/20 rounded px-3 py-2">
+                        <Text className="text-xs font-semibold text-error text-center">Delete</Text>
+                      </View>
                     </Pressable>
                   </View>
                 </View>
@@ -389,40 +402,56 @@ export default function HomeScreen() {
   );
 }
 
-// Action Button Component
+// Action Button Component - Fixed to use style instead of className
 function ActionButton({
   label,
   onPress,
   loading = false,
   variant = "primary",
+  colors,
 }: {
   label: string;
   onPress: () => void;
   loading?: boolean;
   variant?: "primary" | "secondary";
+  colors: any;
 }) {
-  const colors = useColors();
   const isPrimary = variant === "primary";
 
   return (
-    <Pressable
-      onPress={onPress}
-      disabled={loading}
-      style={({ pressed }) => [
-        { opacity: loading ? 0.6 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
-      ]}
-      className={cn(
-        "flex-1 rounded-lg py-3 px-4 items-center justify-center",
-        isPrimary ? "bg-primary" : "bg-surface border border-border"
-      )}
-    >
-      {loading ? (
-        <ActivityIndicator size="small" color={isPrimary ? "#fff" : colors.primary} />
-      ) : (
-        <Text className={cn("font-semibold text-sm", isPrimary ? "text-background" : "text-foreground")}>
-          {label}
-        </Text>
-      )}
-    </Pressable>
+    <View className="flex-1">
+      <Pressable
+        onPress={onPress}
+        disabled={loading}
+        style={({ pressed }) => [
+          {
+            opacity: loading ? 0.6 : pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+            backgroundColor: isPrimary ? colors.primary : colors.surface,
+            borderColor: isPrimary ? colors.primary : colors.border,
+            borderWidth: isPrimary ? 0 : 1,
+            borderRadius: 8,
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color={isPrimary ? "#fff" : colors.primary} />
+        ) : (
+          <Text
+            style={{
+              fontWeight: "600",
+              fontSize: 14,
+              color: isPrimary ? colors.background : colors.foreground,
+            }}
+          >
+            {label}
+          </Text>
+        )}
+      </Pressable>
+    </View>
   );
 }
