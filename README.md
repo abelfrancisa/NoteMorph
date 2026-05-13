@@ -1,4 +1,8 @@
 NoteMorph App
+
+[**Click here for the Live Demo!**](https://abelfrancisa.github.io/NoteMorph/)
+
+---
 A token-efficient mobile/web GCSE revision app that transforms raw notes into improved notes, flashcards, and summaries using Claude AI.
 Built on Manus platform with React Native, Expo, and TRPC backend.
 Features
