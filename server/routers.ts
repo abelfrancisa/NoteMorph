@@ -61,13 +61,26 @@ export const appRouter = router({
           });
 
           // Extract the response text
-          const responseText =
+          let responseText =
             typeof response.choices[0].message.content === "string"
               ? response.choices[0].message.content
               : "";
 
+          // Remove markdown code blocks if present (```json ... ```)
+          responseText = responseText
+            .replace(/^```json\s*/i, "")
+            .replace(/\s*```$/i, "")
+            .trim();
+
           // Parse JSON response
-          const result = JSON.parse(responseText);
+          let result;
+          try {
+            result = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error("JSON Parse Error:", parseError);
+            console.error("Response text:", responseText);
+            throw new Error(`Failed to parse LLM response: ${parseError instanceof Error ? parseError.message : "Unknown error"}`);
+          }
 
           // Validate response structure based on action
           if (action === "improve" && !result.improved_notes) {

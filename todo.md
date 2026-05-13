@@ -51,3 +51,4 @@
 
 ## Bug Fixes
 - [x] Fix unresponsive Generate button - event listeners, state management, validation logic
+- [x] Fix API integration - all Generate buttons return "Failed to generate content" error
